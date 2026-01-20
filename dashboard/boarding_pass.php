@@ -47,13 +47,6 @@ $boarding_time = date('H:i', $departure_ts - (45 * 60));
     <link href="https://fonts.googleapis.com/css2?family=Libre+Barcode+39&display=swap" rel="stylesheet">
 </head>
 <body class="bg-gray-200 p-4 md:p-10">
-<?php include 'nav.php'; ?>
-    <div class="no-print mb-6 text-center">
-        <button onclick="window.print()" class="bg-blue-600 text-white px-6 py-2 rounded-lg font-bold shadow-lg hover:bg-blue-700 transition">
-            🖨️ Imprimer la carte d'embarquement
-        </button>
-        <p class="text-gray-500 text-xs mt-2">Format optimisé pour impression A4 Paysage</p>
-    </div>
 
     <div class="max-w-4xl mx-auto bg-white border-2 border-dashed border-gray-400 rounded-3xl overflow-hidden shadow-2xl flex flex-col md:flex-row min-h-[350px]">
 
@@ -62,7 +55,7 @@ $boarding_time = date('H:i', $departure_ts - (45 * 60));
 
             <div class="flex justify-between items-start mb-8">
                 <div>
-                    <h1 class="text-3xl font-black italic text-blue-900 tracking-tighter">AIRCONTROL <span class="text-blue-500">V4</span></h1>
+                    <h1 class="text-3xl font-black italic text-blue-900 tracking-tighter">SIO <span class="text-blue-500">AIRLINE</span></h1>
                     <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Official Boarding Document</p>
                 </div>
                 <div class="text-right">
