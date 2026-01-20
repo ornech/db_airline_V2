@@ -1,13 +1,13 @@
-<?php 
-require_once 'config.php'; 
+<?php
+require_once 'config.php';
 
 $selected_aircraft = $_GET['aircraft_id'] ?? null;
 
 // Liste des avions pour le sélecteur
 $aircrafts = $pdo->query("
-    SELECT a.aircraft_id, a.registration, m.model_name 
-    FROM aircrafts a 
-    JOIN aircraft_models m ON a.model_id = m.model_id 
+    SELECT a.aircraft_id, a.registration, m.model_name
+    FROM aircrafts a
+    JOIN aircraft_models m ON a.model_id = m.model_id
     ORDER BY a.registration
 ")->fetchAll();
 
@@ -15,7 +15,7 @@ $vols = [];
 if ($selected_aircraft) {
     // On récupère les vols de l'avion sélectionné par ordre chronologique
     $stmt = $pdo->prepare("
-        SELECT f.flight_id, f.flight_number, r.departure_airport, r.arrival_airport, 
+        SELECT f.flight_id, f.flight_number, r.departure_airport, r.arrival_airport,
                f.scheduled_departure, f.scheduled_arrival
         FROM flights f
         JOIN routes r ON f.route_id = r.route_id
@@ -35,34 +35,39 @@ if ($selected_aircraft) {
 </head>
 <body class="bg-gray-100 pb-10">
 
-    <nav class="bg-blue-900 text-white p-4 shadow-lg mb-8">
-        <div class="container mx-auto flex justify-between items-center">
-            <h1 class="text-2xl font-bold tracking-tight italic">✈ AirControl</h1>
-            <div class="space-x-6 text-sm font-bold uppercase">
-                <a href="index.php" class="hover:text-blue-300">Dashboard</a>
-                <a href="rotation.php" class="border-b-2 border-white pb-1">Rotations</a>
-                <a href="audit.php" class="hover:text-blue-300">Audit Qualité</a>
-            </div>
+<?php include 'nav.php'; ?>
+
+<nav class="bg-slate-900 text-white shadow-xl py-4">
+    <div class="container mx-auto px-6 flex justify-between items-center">
+
+        <div class="flex flex-col">
+            <span class="text-mb font-bold text-slate-500 uppercase tracking-[0.2em]">Operational Monitoring</span>
         </div>
-    </nav>
+
+        <form method="GET" action="aircraft_details.php" class="flex items-end gap-6">
+            <div class="flex flex-col">
+                <label class="text-[10px] font-black text-blue-400 uppercase tracking-widest mb-1 italic">
+                    Choisir un appareil :
+                </label>
+                <select name="id" class="bg-slate-800 border border-slate-700 text-white text-xs font-black italic rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 outline-none uppercase cursor-pointer">
+                    <option value="">-- Sélectionner l'immatriculation --</option>
+                    <?php foreach ($aircrafts as $a): ?>
+                        <option value="<?= $a['aircraft_id'] ?>" <?= $selected_aircraft == $a['aircraft_id'] ? 'selected' : '' ?>>
+                            <?= $a['registration'] ?> (<?= $a['model_name'] ?>)
+                        </option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+
+            <button type="submit" class="bg-blue-600 hover:bg-blue-500 text-white px-6 py-2 rounded-lg font-black italic uppercase text-xs tracking-widest transition-all shadow-lg active:scale-95">
+                Analyser
+            </button>
+        </form>
+
+    </div>
+</nav>
 
     <main class="container mx-auto p-4">
-        <div class="bg-white p-6 rounded-xl shadow-md mb-8">
-            <form method="GET" class="flex items-end gap-4">
-                <div class="flex-1">
-                    <label class="block text-sm font-bold text-gray-700 mb-2">Choisir un appareil :</label>
-                    <select name="aircraft_id" class="w-full p-2 border rounded-lg bg-gray-50 focus:ring-2 focus:ring-blue-500">
-                        <option value="">-- Sélectionner l'immatriculation --</option>
-                        <?php foreach ($aircrafts as $a): ?>
-                            <option value="<?= $a['aircraft_id'] ?>" <?= $selected_aircraft == $a['aircraft_id'] ? 'selected' : '' ?>>
-                                <?= $a['registration'] ?> (<?= $a['model_name'] ?>)
-                            </option>
-                        <?php endforeach; ?>
-                    </select>
-                </div>
-                <button type="submit" class="bg-blue-600 text-white px-8 py-2 rounded-lg font-bold hover:bg-blue-700 transition">Analyser</button>
-            </form>
-        </div>
 
         <?php if ($selected_aircraft && $vols): ?>
             <div class="bg-white rounded-xl shadow-lg overflow-hidden">
@@ -78,10 +83,10 @@ if ($selected_aircraft) {
                         </tr>
                     </thead>
                     <tbody>
-                        <?php 
+                        <?php
                         $prev_arrival_airport = null; // Pour le test de téléportation
 
-                        foreach ($vols as $vol): 
+                        foreach ($vols as $vol):
                             // 1. CALCUL DE LA DURÉE DU VOL (Arrivée - Départ du même vol)
                             $timestamp_dep = strtotime($vol['scheduled_departure']);
                             $timestamp_arr = strtotime($vol['scheduled_arrival']);
@@ -105,8 +110,8 @@ if ($selected_aircraft) {
                                 <td class="p-4 font-bold">
                                     <span class="<?= $is_teleport ? 'text-red-600 underline decoration-wavy' : '' ?>">
                                         <?= $vol['departure_airport'] ?>
-                                    </span> 
-                                    <span class="text-gray-300 font-normal mx-1">→</span> 
+                                    </span>
+                                    <span class="text-gray-300 font-normal mx-1">→</span>
                                     <span><?= $vol['arrival_airport'] ?></span>
                                 </td>
                                 <td class="p-4 text-center text-gray-500 font-mono">
@@ -130,7 +135,7 @@ if ($selected_aircraft) {
                                     <?php endif; ?>
                                 </td>
                             </tr>
-                        <?php 
+                        <?php
                             // On stocke l'arrivée pour la ligne suivante (test téléportation)
                             $prev_arrival_airport = $vol['arrival_airport'];
                         endforeach; ?>

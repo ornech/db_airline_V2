@@ -1,5 +1,5 @@
-<?php 
-require_once 'config.php'; 
+<?php
+require_once 'config.php';
 
 // On récupère l'ID du booking (billet)
 $booking_id = $_GET['id'] ?? null;
@@ -10,7 +10,7 @@ if (!$booking_id) {
 
 // Requête ultra-complète pour rassembler toutes les infos du billet
 $stmt = $pdo->prepare("
-    SELECT 
+    SELECT
         b.booking_id, b.seat_number, b.class, b.booking_date,
         p.nom, p.prenom, p.passport_number,
         f.flight_number, f.scheduled_departure,
@@ -47,7 +47,7 @@ $boarding_time = date('H:i', $departure_ts - (45 * 60));
     <link href="https://fonts.googleapis.com/css2?family=Libre+Barcode+39&display=swap" rel="stylesheet">
 </head>
 <body class="bg-gray-200 p-4 md:p-10">
-
+<?php include 'nav.php'; ?>
     <div class="no-print mb-6 text-center">
         <button onclick="window.print()" class="bg-blue-600 text-white px-6 py-2 rounded-lg font-bold shadow-lg hover:bg-blue-700 transition">
             🖨️ Imprimer la carte d'embarquement
@@ -56,10 +56,10 @@ $boarding_time = date('H:i', $departure_ts - (45 * 60));
     </div>
 
     <div class="max-w-4xl mx-auto bg-white border-2 border-dashed border-gray-400 rounded-3xl overflow-hidden shadow-2xl flex flex-col md:flex-row min-h-[350px]">
-        
+
         <div class="flex-1 p-8 border-r-2 border-dashed border-gray-200 relative">
             <div class="absolute top-0 right-0 m-4 opacity-10 text-6xl font-black italic text-gray-400">BOARDING PASS</div>
-            
+
             <div class="flex justify-between items-start mb-8">
                 <div>
                     <h1 class="text-3xl font-black italic text-blue-900 tracking-tighter">AIRCONTROL <span class="text-blue-500">V4</span></h1>
@@ -123,11 +123,11 @@ $boarding_time = date('H:i', $departure_ts - (45 * 60));
                 <p class="text-[10px] font-bold text-slate-500 uppercase mb-4 tracking-widest">Passenger Stub</p>
                 <div class="text-xs opacity-60 mb-1 italic">Flight</div>
                 <div class="text-2xl font-black mb-4"><?= $ticket['flight_number'] ?></div>
-                
+
                 <div class="text-xs opacity-60 mb-1 italic">Seat</div>
                 <div class="text-4xl font-black text-blue-400 mb-6"><?= $ticket['seat_number'] ?></div>
             </div>
-            
+
             <div class="w-full">
                 <div class="barcode leading-none opacity-80"><?= $ticket['booking_id'] ?><?= $ticket['flight_number'] ?></div>
                 <p class="text-[8px] font-mono tracking-widest mt-2 uppercase"><?= htmlspecialchars($ticket['nom']) ?> / <?= $ticket['booking_id'] ?></p>

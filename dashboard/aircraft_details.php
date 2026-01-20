@@ -1,12 +1,12 @@
-<?php 
-require_once 'config.php'; 
+<?php
+require_once 'config.php';
 
 $aircraft_id = $_GET['id'] ?? null;
 if (!$aircraft_id) { die("ID de l'aéronef manquant."); }
 
 // 1. Infos techniques avec vos noms de colonnes
 $stmt = $pdo->prepare("
-    SELECT a.*, m.model_name, m.manufacturer, m.capacity_eco, m.capacity_bus, 
+    SELECT a.*, m.model_name, m.manufacturer, m.capacity_eco, m.capacity_bus,
            m.fuel_burn_per_hour, m.maintenance_interval_hours
     FROM aircrafts a
     JOIN aircraft_models m ON a.model_id = m.model_id
@@ -16,10 +16,33 @@ $stmt->execute([$aircraft_id]);
 $plane = $stmt->fetch();
 
 if (!$plane) { die("Appareil introuvable."); }
+$selected_aircraft = $_GET['aircraft_id'] ?? null;
+
+// Liste des avions pour le sélecteur
+$aircrafts = $pdo->query("
+    SELECT a.aircraft_id, a.registration, m.model_name
+    FROM aircrafts a
+    JOIN aircraft_models m ON a.model_id = m.model_id
+    ORDER BY a.registration
+")->fetchAll();
+
+if ($selected_aircraft) {
+    // On récupère les vols de l'avion sélectionné par ordre chronologique
+    $stmt = $pdo->prepare("
+        SELECT f.flight_id, f.flight_number, r.departure_airport, r.arrival_airport,
+               f.scheduled_departure, f.scheduled_arrival
+        FROM flights f
+        JOIN routes r ON f.route_id = r.route_id
+        WHERE f.aircraft_id = ?
+        ORDER BY f.scheduled_departure ASC
+    ");
+    $stmt->execute([$selected_aircraft]);
+    $vols = $stmt->fetchAll();
+}
 
 // 2. Statistiques d'utilisation
 $stmt_stats = $pdo->prepare("
-    SELECT 
+    SELECT
         COUNT(*) as total_flights,
         SUM(r.distance_km) as total_distance,
         SUM(r.avg_flight_duration_minutes) as total_minutes
@@ -58,22 +81,48 @@ $history = $stmt_history->fetchAll();
 </head>
 <body class="bg-slate-100 text-slate-900">
 
-    <nav class="bg-blue-900 text-white p-4 shadow-lg">
-        <div class="container mx-auto flex justify-between items-center">
-            <a href="rotations.php" class="text-sm font-bold bg-blue-800 px-4 py-2 rounded hover:bg-blue-700 transition">← Retour Rotations</a>
-            <h1 class="font-black tracking-tighter italic text-xl">TECH LOG : <?= $plane['registration'] ?></h1>
+<?php include 'nav.php'; ?>
+
+
+<nav class="bg-slate-900 text-white shadow-xl py-4">
+    <div class="container mx-auto px-6 flex justify-between items-center">
+
+        <div class="flex flex-col">
+            <span class="text-mb font-bold text-slate-500 uppercase tracking-[0.2em]">Operational Monitoring</span>
         </div>
-    </nav>
+
+        <form method="GET" action="aircraft_details.php" class="flex items-end gap-6">
+            <div class="flex flex-col">
+                <label class="text-[10px] font-black text-blue-400 uppercase tracking-widest mb-1 italic">
+                    Choisir un appareil :
+                </label>
+                <select name="id" class="bg-slate-800 border border-slate-700 text-white text-xs font-black italic rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 outline-none uppercase cursor-pointer">
+                    <option value="">-- Sélectionner l'immatriculation --</option>
+                    <?php foreach ($aircrafts as $a): ?>
+                        <option value="<?= $a['aircraft_id'] ?>" <?= $selected_aircraft == $a['aircraft_id'] ? 'selected' : '' ?>>
+                            <?= $a['registration'] ?> (<?= $a['model_name'] ?>)
+                        </option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+
+            <button type="submit" class="bg-blue-600 hover:bg-blue-500 text-white px-6 py-2 rounded-lg font-black italic uppercase text-xs tracking-widest transition-all shadow-lg active:scale-95">
+                Analyser
+            </button>
+        </form>
+
+    </div>
+</nav>
 
     <main class="container mx-auto mt-8 p-4">
-        
+
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
-            
+
             <div class="bg-white p-8 rounded-3xl shadow-sm border border-slate-200 flex flex-col items-center justify-center text-center">
                 <div class="w-16 h-16 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center text-2xl mb-4">✈</div>
                 <h2 class="text-4xl font-black text-slate-800 tracking-tighter"><?= $plane['registration'] ?></h2>
                 <p class="text-blue-600 font-bold uppercase tracking-widest text-xs mb-6"><?= $plane['manufacturer'] ?> <?= $plane['model_name'] ?></p>
-                
+
                 <div class="grid grid-cols-2 gap-4 w-full border-t pt-6 text-left">
                     <div class="bg-slate-50 p-3 rounded-xl">
                         <p class="text-[9px] font-bold text-slate-400 uppercase">Eco Class</p>
@@ -88,7 +137,7 @@ $history = $stmt_history->fetchAll();
 
             <div class="lg:col-span-2 bg-slate-900 text-white p-8 rounded-3xl shadow-xl flex flex-col justify-between relative overflow-hidden">
                 <div class="absolute top-0 right-0 p-8 opacity-10 text-8xl font-black italic">DATA</div>
-                
+
                 <p class="text-xs font-bold text-slate-400 uppercase tracking-[0.3em] mb-4">Indicateurs de Maintenance</p>
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-8 relative z-10">
                     <div>

@@ -8,16 +8,7 @@
 </head>
 <body class="bg-gray-100">
 
-    <nav class="bg-blue-900 text-white p-4 shadow-lg">
-        <div class="container mx-auto flex justify-between items-center">
-            <h1 class="text-2xl font-bold tracking-tight">✈️ AirControl <span class="text-blue-300 font-light">Admin</span></h1>
-            <div class="space-x-6">
-                <a href="index.php" class="border-b-2 border-white">Dashboard</a>
-                <a href="rotations.php" class="hover:text-blue-200">Rotations Flotte</a>
-                <a href="audit.php" class="hover:text-blue-200">Audit Qualité</a>
-            </div>
-        </div>
-    </nav>
+<?php include 'nav.php'; ?>
 
     <main class="container mx-auto mt-8 p-4">
         <h2 class="text-3xl font-semibold text-gray-800 mb-6">Statistiques de la Simulation</h2>

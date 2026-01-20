@@ -4,19 +4,19 @@ require_once 'config.php';
 // 1. KPI : Taux de Ponctualité (OTP)
 // Un vol est "On-Time" s'il a moins de 15 min de retard à l'arrivée
 $otp_query = $pdo->query("
-    SELECT 
+    SELECT
         COUNT(*) as total,
         SUM(CASE WHEN TIMESTAMPDIFF(MINUTE, scheduled_arrival, actual_arrival) <= 15 THEN 1 ELSE 0 END) as on_time
-    FROM flights 
+    FROM flights
     WHERE actual_arrival IS NOT NULL
 ")->fetch();
 $otp_rate = ($otp_query['total'] > 0) ? round(($otp_query['on_time'] / $otp_query['total']) * 100, 1) : 0;
 
 // 2. Répartition des Causes de Retards (Données pour le Graphique)
 $delay_reasons = $pdo->query("
-    SELECT code_id, SUM(delay_minutes) as total_min 
-    FROM flight_delays 
-    GROUP BY code_id 
+    SELECT code_id, SUM(delay_minutes) as total_min
+    FROM flight_delays
+    GROUP BY code_id
     ORDER BY total_min DESC
 ")->fetchAll();
 
@@ -25,7 +25,7 @@ $efficiency = $pdo->query("
     SELECT a.registration, AVG(counts.cnt) as avg_pax
     FROM (
         /* Correction ici : on ajoute f.aircraft_id pour que le JOIN fonctionne après */
-        SELECT b.flight_id, f.aircraft_id, COUNT(*) as cnt 
+        SELECT b.flight_id, f.aircraft_id, COUNT(*) as cnt
         FROM bookings b
         JOIN flights f ON b.flight_id = f.flight_id
         GROUP BY b.flight_id, f.aircraft_id
@@ -46,6 +46,8 @@ $efficiency = $pdo->query("
 </head>
 <body class="bg-slate-50">
 
+<?php include 'nav.php'; ?>
+
     <nav class="bg-slate-900 text-white p-4 shadow-xl">
         <div class="container mx-auto flex justify-between items-center">
             <h1 class="text-xl font-black italic">AIRCONTROL <span class="text-blue-400">AUDIT</span></h1>
@@ -54,7 +56,7 @@ $efficiency = $pdo->query("
     </nav>
 
     <main class="container mx-auto mt-8 p-4">
-        
+
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
             <div class="bg-white p-6 rounded-2xl shadow-sm border-l-4 border-blue-500">
                 <p class="text-xs font-bold text-gray-400 uppercase">Ponctualité Flotte (OTP)</p>
