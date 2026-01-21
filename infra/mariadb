@@ -1,0 +1,4 @@
+DROP USER IF EXISTS 'user'@'localhost';
+CREATE USER 'user'@'%' IDENTIFIED BY 'motdepasse';
+GRANT SELECT, TRIGGER ON db_airline.* TO 'user'@'localhost';
+FLUSH PRIVILEGES;
