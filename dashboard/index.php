@@ -1,115 +1,189 @@
-<?php require_once 'config.php'; ?>
+<?php 
+require_once 'config.php'; 
+
+// Requête optimisée pour les volumes et les dernières entrées
+$query = $pdo->query("
+    SELECT 
+        (SELECT COUNT(*) FROM flights) as total_flights,
+        (SELECT COUNT(*) FROM bookings) as total_bookings,
+        (SELECT COUNT(*) FROM baggage) as total_bags,
+        (SELECT COUNT(*) FROM passengers) as total_passengers,
+        (SELECT COUNT(*) FROM employees) as total_staff,
+        (SELECT actual_arrival FROM flights WHERE status = 'ARRIVED' ORDER BY actual_arrival DESC LIMIT 1) as last_update
+    FROM DUAL
+");
+$data = $query->fetch(PDO::FETCH_ASSOC);
+?>
+
 <!DOCTYPE html>
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <title>AirControl - Gestion et Audit</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AirControl - Monitoring BDD</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        .hover-card { transition: all 0.2s ease-out; }
+        .hover-card:hover { transform: translateY(-3px); box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); }
+        
+        /* Personnalisation de la barre de défilement du modal pour un look pro */
+        .custom-scrollbar::-webkit-scrollbar { width: 10px; height: 10px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #1e293b; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #475569; border-radius: 5px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #64748b; }
+    </style>
 </head>
-<body class="bg-gray-100 text-gray-900">
+<body class="bg-gray-50 text-slate-900">
 
 <?php include 'nav.php'; ?>
 
-<main class="container mx-auto mt-8 p-4">
+<main class="container mx-auto mt-8 p-6">
+    
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-10">
+        <div>
+            <h1 class="text-2xl font-black text-slate-800 uppercase tracking-tight">Audit Database : <span class="text-blue-600">db_airline_V4</span></h1>
+            <p class="text-slate-500 text-sm">Dernière injection de données : <span class="font-mono font-bold text-slate-700"><?= $data['last_update'] ?? 'Aucune donnée' ?></span></p>
+        </div>
+        <div class="flex gap-2">
+            <span class="px-3 py-1 bg-slate-200 text-slate-600 rounded text-xs font-bold uppercase">MySQL 8.0</span>
+            <span class="px-3 py-1 bg-blue-100 text-blue-600 rounded text-xs font-bold uppercase">UTF8MB4</span>
+        </div>
+    </div>
 
-    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-12">
+    <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-10">
         <?php
-        $stats = [
-            'Total des Vols' => ['val' => $pdo->query("SELECT COUNT(*) FROM flights")->fetchColumn(), 'icon' => 'fa-plane', 'color' => 'blue'],
-            'Passagers Transportés' => ['val' => $pdo->query("SELECT COUNT(*) FROM bookings")->fetchColumn(), 'icon' => 'fa-users', 'color' => 'indigo'],
-            'Bagages Enregistrés' => ['val' => $pdo->query("SELECT COUNT(*) FROM baggage")->fetchColumn(), 'icon' => 'fa-suitcase', 'color' => 'purple'],
-            'Appareils en Flotte' => ['val' => $pdo->query("SELECT COUNT(*) FROM aircrafts")->fetchColumn(), 'icon' => 'fa-shuttle-van', 'color' => 'green']
+        $cards = [
+            ['Vols', $data['total_flights'], 'fa-plane', 'blue'],
+            ['Bookings', $data['total_bookings'], 'fa-ticket-alt', 'indigo'],
+            ['Bagages', $data['total_bags'], 'fa-suitcase', 'purple'],
+            ['Clients', $data['total_passengers'], 'fa-user-friends', 'emerald'],
+            ['Staff', $data['total_staff'], 'fa-id-badge', 'orange']
         ];
-
-        foreach ($stats as $label => $data): ?>
-            <div class="bg-white p-6 rounded-xl shadow-sm border-t-4 border-<?= $data['color'] ?>-500">
-                <div class="flex items-center gap-4">
-                    <div class="text-2xl text-<?= $data['color'] ?>-500 w-10 text-center"><i class="fas <?= $data['icon'] ?>"></i></div>
-                    <div>
-                        <p class="text-xs text-gray-400 font-bold uppercase"><?= $label ?></p>
-                        <p class="text-2xl font-black"><?= number_format($data['val'], 0, ',', ' ') ?></p>
-                    </div>
+        foreach ($cards as $card): ?>
+            <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm hover-card">
+                <div class="flex items-center gap-3 mb-2 text-<?= $card[3] ?>-600">
+                    <i class="fas <?= $card[2] ?>"></i>
+                    <span class="text-xs font-black uppercase tracking-widest text-slate-400"><?= $card[0] ?></span>
                 </div>
+                <p class="text-2xl font-black text-slate-800"><?= number_format($card[1], 0, ',', ' ') ?></p>
             </div>
         <?php endforeach; ?>
     </div>
 
-    <div class="grid grid-cols-1 gap-8">
-        
-        <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-            <div class="bg-blue-600 p-4">
-                <h3 class="text-white font-bold flex items-center gap-2 uppercase tracking-wide">
-                    <i class="fa-solid fa-clipboard-check"></i>
-                    Demandes de la Direction Opérationnelle
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+
+        <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-bold flex items-center gap-2">
+                    <i class="fas fa-project-diagram text-blue-500"></i>
+                    Structure des Relations
                 </h3>
+                <button onclick="openModal()" class="text-xs bg-blue-50 text-blue-600 px-3 py-1 rounded-full font-bold hover:bg-blue-100 transition">
+                    <i class="fas fa-expand mr-1"></i> Voir Schéma Complet
+                </button>
             </div>
-            <div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-8">
-                
-                <div class="bg-gray-50 p-5 rounded-lg border-l-4 border-blue-600">
-                    <h4 class="font-bold text-blue-800 mb-2">1. Analyse de la Ponctualité Globale</h4>
-                    <p class="text-sm text-gray-600 mb-4">La direction souhaite connaître le pourcentage exact de vols arrivés à l'heure (sans aucun retard enregistré) sur l'année.</p>
-                    <div class="bg-white p-3 rounded border border-gray-200 font-mono text-xs">
-                        <span class="text-red-600 font-bold">Objectif SQL :</span> Calculer le ratio entre le nombre de vols sans retard dans la table <code>flight_delays</code> et le total de la table <code>flights</code>.
+
+            <div class="space-y-4 flex-grow">
+                <div class="p-4 bg-slate-50 rounded-lg border-l-4 border-blue-400">
+                    <p class="text-sm font-bold text-slate-700">Relation Vols ↔ Réservations</p>
+                    <p class="text-xs text-slate-500 mt-1">Liaison via <code>flight_id</code>. Chaque réservation est assignée à un siège spécifique.</p>
+                </div>
+                <div class="p-4 bg-slate-50 rounded-lg border-l-4 border-purple-400">
+                    <p class="text-sm font-bold text-slate-700">Relation Réservations ↔ Bagages</p>
+                    <p class="text-xs text-slate-500 mt-1">Liaison via <code>booking_id</code>. Audit de sécurité activé (validation du champ <code>is_noshow</code>).</p>
+                </div>
+            </div>
+
+            <div onclick="openModal()" class="mt-6 cursor-pointer overflow-hidden rounded-lg border border-slate-200 group relative">
+                <img src="db_airline_V4.png" alt="Schéma BDD" class="w-full h-40 object-cover group-hover:scale-105 transition duration-500 opacity-70">
+                <div class="absolute inset-0 bg-slate-900/20 group-hover:bg-transparent transition"></div>
+                <div class="absolute inset-0 flex items-center justify-center">
+                    <span class="bg-white px-4 py-2 rounded shadow-xl text-xs font-black text-slate-700">AGRANDIR LE SCHÉMA</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-slate-800 text-white p-6 rounded-2xl shadow-xl">
+            <h3 class="text-lg font-bold mb-4 flex items-center gap-2">
+                <i class="fas fa-clipboard-check text-emerald-400"></i>
+                Intégrité du Dataset
+            </h3>
+            <ul class="space-y-4">
+                <li class="flex items-start gap-3 text-sm">
+                    <i class="fas fa-check-circle text-emerald-500 mt-1"></i>
+                    <div>
+                        <span class="font-bold">Contraintes d'intégrité :</span>
+                        <p class="text-slate-400 text-xs">Toutes les clés étrangères (FK) sont indexées pour optimiser les JOIN.</p>
                     </div>
-                </div>
-
-                <div class="bg-gray-50 p-5 rounded-lg border-l-4 border-blue-600">
-                    <h4 class="font-bold text-blue-800 mb-2">2. Impact des Retards en Cascade</h4>
-                    <p class="text-sm text-gray-600 mb-4">Quel est le cumul total (en minutes) des retards dus uniquement à la répercussion d'un vol précédent (Code IATA 89) ?</p>
-                    <div class="bg-white p-3 rounded border border-gray-200 font-mono text-xs">
-                        <span class="text-red-600 font-bold">Objectif SQL :</span> Effectuer la somme de la colonne <code>delay_minutes</code> pour le code_id 89.
+                </li>
+                <li class="flex items-start gap-3 text-sm">
+                    <i class="fas fa-check-circle text-emerald-500 mt-1"></i>
+                    <div>
+                        <span class="font-bold">Historique Simulation :</span>
+                        <p class="text-slate-400 text-xs">Couverture de 360 jours d'opérations aériennes générées.</p>
                     </div>
-                </div>
-
+                </li>
+                <li class="flex items-start gap-3 text-sm">
+                    <i class="fas fa-check-circle text-emerald-500 mt-1"></i>
+                    <div>
+                        <span class="font-bold">Variables métier :</span>
+                        <p class="text-slate-400 text-xs">Injection des données de No-Show et Retards IATA (Code 89) confirmée.</p>
+                    </div>
+                </li>
+            </ul>
+            
+            <div class="mt-10 p-4 bg-blue-900/30 rounded-xl border border-blue-500/30">
+                <p class="text-xs text-blue-200 leading-relaxed">
+                    <i class="fas fa-info-circle mr-1 text-blue-400"></i> 
+                    <strong>Note technique :</strong> Le dataset contient des anomalies volontaires (retards, no-shows, annulations) pour tester vos capacités d'analyse SQL.
+                </p>
             </div>
         </div>
-
-        <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-            <div class="bg-green-700 p-4">
-                <h3 class="text-white font-bold flex items-center gap-2 uppercase tracking-wide">
-                    <i class="fa-solid fa-sack-dollar"></i>
-                    Rapport de Rentabilité Commerciale
-                </h3>
-            </div>
-            <div class="p-6 grid grid-cols-1 md:grid-cols-3 gap-6">
-                
-                <div class="bg-gray-50 p-5 rounded-lg border-t-4 border-green-600">
-                    <h4 class="font-bold text-gray-800 mb-2">Top 5 des Destinations</h4>
-                    <p class="text-sm text-gray-600 mb-4 italic">Quelles sont les 5 routes qui ont généré le plus de chiffre d'affaires (somme des prix payés) ?</p>
-                    <p class="text-[11px] text-gray-400 font-bold uppercase">Tables : bookings, flights, routes</p>
-                </div>
-
-                <div class="bg-gray-50 p-5 rounded-lg border-t-4 border-green-600">
-                    <h4 class="font-bold text-gray-800 mb-2">Analyse par Appareil</h4>
-                    <p class="text-sm text-gray-600 mb-4 italic">Pour l'avion immatriculé 'F-HNET', quel est son taux de remplissage moyen (passagers réels vs sièges disponibles) ?</p>
-                    <p class="text-[11px] text-gray-400 font-bold uppercase">Tables : aircrafts, seats, bookings</p>
-                </div>
-
-                <div class="bg-gray-50 p-5 rounded-lg border-t-4 border-green-600">
-                    <h4 class="font-bold text-gray-800 mb-2">Panier Moyen Passager</h4>
-                    <p class="text-sm text-gray-600 mb-4 italic">Calculez le prix moyen payé pour un billet d'avion, toutes classes confondues.</p>
-                    <p class="text-[11px] text-gray-400 font-bold uppercase">Tables : bookings</p>
-                </div>
-
-            </div>
-        </div>
-
-        <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden mb-10">
-            <div class="bg-red-700 p-4 text-white flex justify-between">
-                <h3 class="font-bold uppercase tracking-wide">Audit de Maintenance Flotte</h3>
-                <span class="text-xs font-bold bg-red-800 px-2 py-1 rounded">Prioritaire</span>
-            </div>
-            <div class="p-6 italic font-medium">
-                <p class="text-sm text-gray-700 mb-4">Le service technique a besoin d'identifier les appareils posant des problèmes récurrents :</p>
-                <div class="bg-red-50 p-4 border border-red-100 rounded text-sm text-red-900">
-                    "Veuillez lister les immatriculations des appareils (aircraft_id) ayant cumulé plus de 10 incidents de type <strong>Technique</strong> (Codes IATA compris entre 41 et 48) sur la période."
-                </div>
-            </div>
-        </div>
-
     </div>
 </main>
+
+<div id="db-schema-modal" class="hidden fixed inset-0 bg-black/95 z-50 flex flex-col backdrop-blur-md p-4" onclick="closeModal()">
+    
+    <div class="flex justify-between items-center text-white mb-4 px-4">
+        <div class="flex items-center gap-3">
+            <i class="fas fa-project-diagram text-blue-400"></i>
+            <p class="text-sm font-black uppercase tracking-widest text-slate-300">Schéma relationnel db_airline_V4</p>
+        </div>
+        <button class="bg-white/10 hover:bg-red-500 hover:text-white px-4 py-2 rounded-lg text-sm font-black flex items-center gap-2 transition-all">
+            FERMER <i class="fas fa-times"></i>
+        </button>
+    </div>
+
+    <div class="flex-grow overflow-auto custom-scrollbar bg-slate-900 rounded-xl shadow-inner border border-white/10" onclick="event.stopPropagation()">
+        <img src="db_airline_V4.png" alt="Schéma Complet" class="max-w-none block mx-auto p-8" style="min-width: 1800px;">
+    </div>
+    
+    <div class="text-center text-slate-500 text-[10px] mt-4 uppercase tracking-tighter">
+        <i class="fas fa-mouse mr-1"></i> Utilisez la molette ou les barres latérales pour naviguer dans le dictionnaire de données
+    </div>
+</div>
+
+<script>
+// Logique d'ouverture du modal
+function openModal() {
+    const modal = document.getElementById('db-schema-modal');
+    modal.classList.remove('hidden');
+    document.body.style.overflow = 'hidden'; // Bloque le défilement de la page principale
+}
+
+// Logique de fermeture du modal
+function closeModal() {
+    const modal = document.getElementById('db-schema-modal');
+    modal.classList.add('hidden');
+    document.body.style.overflow = 'auto'; // Restaure le défilement
+}
+
+// Fermeture avec la touche Echap pour l'accessibilité
+document.addEventListener('keydown', function(e) {
+    if (e.key === "Escape") closeModal();
+});
+</script>
 
 </body>
 </html>

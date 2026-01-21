@@ -114,24 +114,34 @@ def insert_flight(cursor, aircraft, route, departure_time, day_crew, all_pax, ca
         seats = cursor.fetchall()
         num_pax = int(len(seats) * random.uniform(0.75, 0.95)) # Taux 75-95% conservé
         sampled_pax = random.sample(all_pax, min(num_pax, len(all_pax)))
-
+        
         for i in range(len(sampled_pax)):
             pnr = ''.join(random.choices(string.ascii_uppercase + string.digits, k=6))
-            cursor.execute("""
-                INSERT INTO bookings (flight_id, passenger_id, pnr, seat_id, seat_number, class, price_paid)
-                VALUES (%s, %s, %s, %s, %s, %s, %s)
-            """, (f_id, sampled_pax[i], pnr, seats[i]['seat_id'], seats[i]['seat_number'], seats[i]['class'], random.randint(60, 450)))
+            
+            # 1. LOGIQUE NO-SHOW (5% de probabilité)
+            is_noshow = 1 if random.random() < 0.05 else 0
 
+            # 2. INSERTION DU BOOKING (Correction : bien inclure is_noshow)
+            cursor.execute("""
+                INSERT INTO bookings (flight_id, passenger_id, pnr, seat_id, seat_number, class, price_paid, is_noshow)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+            """, (f_id, sampled_pax[i], pnr, seats[i]['seat_id'], seats[i]['seat_number'], 
+                  seats[i]['class'], random.randint(60, 450), is_noshow))
+            
             b_id = cursor.lastrowid
-            if random.random() > 0.35: # Probabilité bagage conservée
+
+            # 3. LOGIQUE BAGAGE (Unique et conditionnée)
+            # Un passager No-Show n'a JAMAIS de bagage enregistré.
+            if is_noshow == 0 and random.random() > 0.35: 
                 bag_counter += 1
                 cursor.execute("INSERT INTO baggage (booking_id, tag_number, weight_kg) VALUES (%s, %s, %s)",
                              (b_id, f"TAG{bag_counter}", round(random.uniform(12, 24), 1)))
                 stats["total_baggage"] += 1
 
+        # On sort de la boucle for avant de compter le total
         stats["total_bookings"] += len(sampled_pax)
         return act_arr, total_delay
-
+        
     except Error as err:
         stats["errors"] += 1
         print(f"   [!] Erreur SQL Avion {aircraft['aircraft_id']} : {err.msg}")

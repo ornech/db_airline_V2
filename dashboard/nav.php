@@ -4,11 +4,12 @@
             <span class="font-black italic text-xl leading-none uppercase tracking-tighter">
                 ✈ FLEET <span class="text-blue-500">ANALYSIS</span>
             </span>
-            <span class="text-[9px] font-bold text-slate-500 uppercase tracking-[0.2em]">Operational Monitoring</span>
+            <span class="text-[9px] font-bold text-slate-500 uppercase tracking-[0.2em]">Simulateur pour base de données</span>
         </div>
         <div class="flex gap-8 text-sm font-black uppercase italic tracking-widest">
             <a href="index.php" class="text-slate-400 hover:text-white transition">Dashboard</a>
-            <a href="rotations.php" class="text-white border-b-2 border-blue-500 pb-1">Rotations</a>
+            <a href="rotations.php" class="text-slate-400 hover:text-white transition">Rotations</a>
+            <a href="challenges.php" class="text-slate-400 hover:text-white transition">Challenges</a>
             <a href="audit.php" class="text-slate-400 hover:text-white transition">Audit Qualité</a>
         </div>
     </div>
