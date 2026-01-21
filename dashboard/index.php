@@ -84,19 +84,8 @@ $data = $query->fetch(PDO::FETCH_ASSOC);
                 </button>
             </div>
 
-            <div class="space-y-4 flex-grow">
-                <div class="p-4 bg-slate-50 rounded-lg border-l-4 border-blue-400">
-                    <p class="text-sm font-bold text-slate-700">Relation Vols ↔ Réservations</p>
-                    <p class="text-xs text-slate-500 mt-1">Liaison via <code>flight_id</code>. Chaque réservation est assignée à un siège spécifique.</p>
-                </div>
-                <div class="p-4 bg-slate-50 rounded-lg border-l-4 border-purple-400">
-                    <p class="text-sm font-bold text-slate-700">Relation Réservations ↔ Bagages</p>
-                    <p class="text-xs text-slate-500 mt-1">Liaison via <code>booking_id</code>. Audit de sécurité activé (validation du champ <code>is_noshow</code>).</p>
-                </div>
-            </div>
-
             <div onclick="openModal()" class="mt-6 cursor-pointer overflow-hidden rounded-lg border border-slate-200 group relative">
-                <img src="db_airline_V4.png" alt="Schéma BDD" class="w-full h-40 object-cover group-hover:scale-105 transition duration-500 opacity-70">
+                <img src="db_airline_V4.png" alt="Schéma BDD" class="w-full h-80 object-cover group-hover:scale-105 transition duration-500 opacity-70">
                 <div class="absolute inset-0 bg-slate-900/20 group-hover:bg-transparent transition"></div>
                 <div class="absolute inset-0 flex items-center justify-center">
                     <span class="bg-white px-4 py-2 rounded shadow-xl text-xs font-black text-slate-700">AGRANDIR LE SCHÉMA</span>
